@@ -91,12 +91,12 @@ void SubmenuController::show(
   m_menu->setOnActivate([this, action = std::move(action)](const ContextMenuControlEntry& entry) {
     const int id = entry.id;
     const std::weak_ptr<int> lifetime = m_lifetime;
-    m_page.dismissPopup();
     DeferredCall::callLater([lifetime, action, id] {
       if (!lifetime.expired()) {
         action(id);
       }
     });
+    m_page.dismissPopup();
   });
   m_scroll->setReserveScrollbarGutter(overflowing);
   m_scroll->setSize(width, height);
