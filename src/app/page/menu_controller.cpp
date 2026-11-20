@@ -753,6 +753,7 @@ void MenuController::showActionMenu(
         if (!action) {
           return;
         }
+        m_page.closePopup();
         m_page.dispatchAction(*action, request);
         if (!m_page.popupSurface() && *action != Action::Search && *action != Action::EditLocation) {
           m_page.focusFileList();
