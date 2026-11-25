@@ -1648,6 +1648,25 @@ namespace {
     TEST_CHECK(!service.settings().browser.keybinds.chords(K::CopyTargetPath).front());
   }
 
+  void testStaleKeybindEditDoesNotWriteConflicts() {
+    using K = luciole::KeybindCommand;
+    Fixture fixture;
+    constexpr auto overrides = "[browser]\nshow_hidden = true\n";
+    fixture.write("config.toml", "[browser.keybinds]\nsearch = [\"Ctrl+Alt+C\"]\n");
+    fixture.write("settings.toml", overrides);
+    luciole::ConfigService service(fixture.paths());
+    TEST_CHECK(service.reload());
+    auto edited = service.settings().browser.keybinds;
+    luciole::setKeybindChord(edited, K::Rename, 0, luciole::parseKeybindChord("Alt+R"));
+    const std::array edit{luciole::OverrideEdit{luciole::BrowserPreference::Keybinds, edited}};
+
+    fixture.write("config.toml", "[browser.keybinds]\ncopy_target_path = [\"Ctrl+Alt+C\"]\n");
+    TEST_CHECK(service.saveOverrides(edit) == luciole::AtomicWriteState::NotCommitted);
+    TEST_CHECK(read(fixture.paths().overrides) == overrides);
+    TEST_CHECK(service.reload());
+    TEST_CHECK(luciole::keybindShortcutLabel(service.settings().browser.keybinds, K::CopyTargetPath) == "Ctrl+Alt+C");
+  }
+
 } // namespace
 
 int main() {
@@ -1691,6 +1710,7 @@ int main() {
     testKeybinds();
     testFolderAndClipboardKeybinds();
     testShortcutDefaultsYieldToSavedBindings();
+    testStaleKeybindEditDoesNotWriteConflicts();
     testOverrideSaving();
     std::println("settings checks passed");
     return 0;
