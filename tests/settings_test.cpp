@@ -1543,6 +1543,52 @@ namespace {
         layeredService.settings().browser.keybinds.chords(K::Cut)[0] == chord(XKB_KEY_x, luciole::KeybindMod::Alt)
     );
   }
+  void testFolderAndClipboardKeybinds() {
+    using K = luciole::KeybindCommand;
+    const std::array commands{K::CopyTargetPath, K::CopyTargetUri, K::OpenInOtherPane, K::OpenInNewWindow};
+    const std::array defaults{"Ctrl+Alt+C", "Ctrl+Alt+U", "Ctrl+Alt+Return", "Shift+Return"};
+    const std::array replacements{"Ctrl+Alt+P", "Ctrl+Alt+I", "Ctrl+Alt+O", "Ctrl+Alt+Y"};
+    Fixture fixture;
+    luciole::ConfigService service(fixture.paths());
+    TEST_CHECK(service.reload());
+    auto edited = service.settings().browser.keybinds;
+    TEST_CHECK(luciole::keybindCommands(luciole::KeybindScope::FileBrowser).size() == 45);
+    for (std::size_t i = 0; i < commands.size(); ++i) {
+      TEST_CHECK(edited.chords(commands[i])[0] == luciole::parseKeybindChord(defaults[i]));
+      TEST_CHECK(luciole::keybindCommandFromKey(luciole::keybindCommandKey(commands[i])) == commands[i]);
+      luciole::setKeybindChord(edited, commands[i], 0, luciole::parseKeybindChord(replacements[i]));
+    }
+    TEST_CHECK(luciole::keybindConfigValid(edited));
+    const std::array edit{luciole::OverrideEdit{luciole::BrowserPreference::Keybinds, edited}};
+    TEST_CHECK(service.saveOverrides(edit) == luciole::AtomicWriteState::Durable);
+    luciole::ConfigService restored(fixture.paths());
+    TEST_CHECK(restored.reload());
+    for (std::size_t i = 0; i < commands.size(); ++i) {
+      TEST_CHECK(
+          restored.settings().browser.keybinds.chords(commands[i])[0] == luciole::parseKeybindChord(replacements[i])
+      );
+      luciole::setKeybindChord(edited, commands[i], 0, std::nullopt);
+    }
+    const std::array clear{luciole::OverrideEdit{luciole::BrowserPreference::Keybinds, edited}};
+    TEST_CHECK(restored.saveOverrides(clear) == luciole::AtomicWriteState::Durable);
+    luciole::ConfigService disabled(fixture.paths());
+    TEST_CHECK(disabled.reload());
+    for (const auto command : commands) {
+      TEST_CHECK(!disabled.settings().browser.keybinds.chords(command)[0]);
+    }
+    TEST_CHECK(disabled.settings().browser.keybinds.chords(K::Copy)[0] == luciole::parseKeybindChord("Ctrl+C"));
+    auto conflict = luciole::KeybindConfig{};
+    luciole::setKeybindChord(conflict, K::CopyTargetPath, 0, luciole::parseKeybindChord("Ctrl+Alt+U"));
+    TEST_CHECK(!luciole::keybindConfigValid(conflict));
+    TEST_CHECK(
+        luciole::keybindConflict(conflict, K::CopyTargetPath, 0, *conflict.chords(K::CopyTargetPath)[0])
+        == K::CopyTargetUri
+    );
+    conflict = luciole::KeybindConfig{};
+    luciole::setKeybindChord(conflict, K::OpenInOtherPane, 0, luciole::parseKeybindChord("Shift+Return"));
+    TEST_CHECK(!luciole::keybindConfigValid(conflict));
+  }
+
 } // namespace
 
 int main() {
@@ -1584,6 +1630,7 @@ int main() {
     testInteractionModes();
     testThumbnailSettings();
     testKeybinds();
+    testFolderAndClipboardKeybinds();
     testOverrideSaving();
     std::println("settings checks passed");
     return 0;

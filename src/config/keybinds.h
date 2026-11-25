@@ -60,12 +60,16 @@ namespace luciole {
     Open,
     OpenInNewTab,
     OpenInNewTabBackground,
+    OpenInOtherPane,
+    OpenInNewWindow,
     ToggleSelection,
     Rename,
     CreateFolder,
     CreateFile,
     Cut,
     Copy,
+    CopyTargetPath,
+    CopyTargetUri,
     Paste,
     Trash,
     DeletePermanently,
@@ -109,7 +113,7 @@ namespace luciole {
     SelectTab8,
     SelectTab9,
   };
-  inline constexpr std::size_t kKeybindCommandCount = 75;
+  inline constexpr std::size_t kKeybindCommandCount = 79;
   inline constexpr std::size_t kMaxKeybindChords = 4;
   inline constexpr std::array<KeybindScope, 3> kKeybindScopes{
       KeybindScope::Controls, KeybindScope::FileBrowser, KeybindScope::TabsAndWindows

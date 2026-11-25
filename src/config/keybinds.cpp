@@ -196,6 +196,16 @@ namespace {
        "open_in_new_tab_background",
        "Open in New Tab in Background",
        {"Ctrl+Shift+Return"}},
+      {KeybindCommand::OpenInOtherPane,
+       KeybindScope::FileBrowser,
+       "open_in_other_pane",
+       "Open in Other Pane",
+       {"Ctrl+Alt+Return"}},
+      {KeybindCommand::OpenInNewWindow,
+       KeybindScope::FileBrowser,
+       "open_in_new_window",
+       "Open in New Window",
+       {"Shift+Return"}},
       {KeybindCommand::ToggleSelection,
        KeybindScope::FileBrowser,
        "toggle_selection",
@@ -206,6 +216,8 @@ namespace {
       {KeybindCommand::CreateFile, KeybindScope::FileBrowser, "create_file", "Create File", {"Ctrl+Alt+N"}},
       {KeybindCommand::Cut, KeybindScope::FileBrowser, "cut", "Cut", {"Ctrl+X"}},
       {KeybindCommand::Copy, KeybindScope::FileBrowser, "copy", "Copy", {"Ctrl+C"}},
+      {KeybindCommand::CopyTargetPath, KeybindScope::FileBrowser, "copy_target_path", "Copy Path", {"Ctrl+Alt+C"}},
+      {KeybindCommand::CopyTargetUri, KeybindScope::FileBrowser, "copy_target_uri", "Copy URI", {"Ctrl+Alt+U"}},
       {KeybindCommand::Paste, KeybindScope::FileBrowser, "paste", "Paste", {"Ctrl+V"}},
       {KeybindCommand::Trash, KeybindScope::FileBrowser, "trash", "Move to Trash", {"Delete"}},
       {KeybindCommand::DeletePermanently,
@@ -281,7 +293,7 @@ namespace {
   );
 
   constexpr std::size_t kControlKeybindCount = 12;
-  constexpr std::size_t kFileBrowserKeybindCount = 41;
+  constexpr std::size_t kFileBrowserKeybindCount = 45;
   constexpr std::size_t kTabsAndWindowsKeybindCount = 22;
   static_assert(kControlKeybindCount + kFileBrowserKeybindCount + kTabsAndWindowsKeybindCount == kKeybindSpecs.size());
 } // namespace

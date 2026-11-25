@@ -48,6 +48,8 @@ namespace {
         {"Open folder in a new tab", luciole::keybindShortcutLabel(K::OpenInNewTab)},
         {"Open folder in a new tab, opposite focus preference",
          luciole::keybindShortcutLabel(K::OpenInNewTabBackground)},
+        {"Open folder in the other pane", luciole::keybindShortcutLabel(K::OpenInOtherPane)},
+        {"Open folder in a new window", luciole::keybindShortcutLabel(K::OpenInNewWindow)},
         {"First / last item", joinShortcuts({K::MoveFirst, K::MoveLast}, " / ")},
         {"Previous / next page", joinShortcuts({K::MovePageUp, K::MovePageDown}, " / ")},
         {"Extend the selection", "Shift+Arrow keys"},
@@ -124,12 +126,12 @@ void ShortcutsController::open() {
         )
     );
   };
+  const bool singleWindow = m_page.settings().singleWindow;
   heading("Files and Folders");
   for (const auto& [text, keys] : fileShortcuts()) {
-    row(text, keys);
+    row(singleWindow && text == "Open folder in a new window" ? "Open folder in a new tab" : text, keys);
   }
   heading("Tabs and Windows");
-  const bool singleWindow = m_page.settings().singleWindow;
   for (const auto& [text, keys] : windowShortcuts()) {
     row(singleWindow && text == "New tab / new window" ? "New tab" : text, keys);
   }

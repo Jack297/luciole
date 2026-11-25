@@ -1242,7 +1242,8 @@ bool BrowserPage::shortcutKey(const KeyboardEvent& event) {
       && !event.repeat
       && dispatchShortcut(
           event,
-          {Action::CopyFiles, Action::CutFiles, Action::PasteFiles, Action::ShowPreview, Action::Undo, Action::Redo}
+          {Action::CopyFiles, Action::CutFiles, Action::PasteFiles, Action::CopyTargetPath, Action::CopyTargetUri,
+           Action::ShowPreview, Action::Undo, Action::Redo}
       )) {
     return true;
   }

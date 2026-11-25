@@ -360,10 +360,14 @@ bool FileKeyboardController::folderKey(const KeyboardEvent& event) {
   const bool openInNewTab = luciole::keybindMatches(luciole::KeybindCommand::OpenInNewTab, event.sym, event.modifiers);
   const bool openInNewTabBackground =
       luciole::keybindMatches(luciole::KeybindCommand::OpenInNewTabBackground, event.sym, event.modifiers);
-  if (openInNewTab || openInNewTabBackground) {
+  const bool openInOtherPane = luciole::keybindMatches(K::OpenInOtherPane, event.sym, event.modifiers);
+  const bool openInNewWindow = luciole::keybindMatches(K::OpenInNewWindow, event.sym, event.modifiers);
+  if (openInNewTab || openInNewTabBackground || openInOtherPane || openInNewWindow) {
     const auto* entry = focused ? model.entry(*focused) : nullptr;
     if (!event.repeat && !m_page.choosing() && entry != nullptr && entry->isFolderLink()) {
-      const auto command = openInNewTabBackground
+      const auto command = openInOtherPane ? WorkspaceCommand::OpenOther
+          : openInNewWindow                ? WorkspaceCommand::NewWindow
+          : openInNewTabBackground
           ? (m_page.settings().switchToNewTab ? WorkspaceCommand::NewBackgroundTab : WorkspaceCommand::NewTab)
           : WorkspaceCommand::OpenTab;
       m_page.requestWorkspace(command, entry->navigationLocation(), std::nullopt);

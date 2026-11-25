@@ -321,12 +321,20 @@ void MenuController::openFileMenu(std::optional<luciole::EntryId> id, float x, f
 void MenuController::showOpenInMenu(const luciole::ActionRequest& request) {
   const bool singleWindow = m_page.settings().singleWindow;
   std::vector<ContextMenuControlEntry> entries{
-      {.id = NewTab, .label = "New Tab"},
+      {.id = NewTab,
+       .label = "New Tab",
+       .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::OpenInNewTab)},
       // Without a second pane, the workspace splits the window to open one.
-      {.id = OtherPane, .label = m_page.hasOtherPane() ? "Other Pane" : "New Pane"},
+      {.id = OtherPane,
+       .label = m_page.hasOtherPane() ? "Other Pane" : "New Pane",
+       .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::OpenInOtherPane)},
   };
   if (!singleWindow) {
-    entries.push_back({.id = NewWindow, .label = "New Window"});
+    entries.push_back(
+        {.id = NewWindow,
+         .label = "New Window",
+         .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::OpenInNewWindow)}
+    );
   }
   m_submenus.show(
       std::move(entries),
