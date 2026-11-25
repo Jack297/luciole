@@ -176,7 +176,7 @@ quick_preview = []
 
 Commands are grouped into three independent scopes. Two commands in the same scope cannot share a chord; the same chord can appear once in each scope. The keybinds section refuses same-scope conflicts, and warns when a chord is already used in another scope because the other command may take precedence depending on focus. Super combinations are reserved for the compositor and are rejected. Unlike other settings tables, an unknown command name or malformed chord in `[browser.keybinds]` invalidates the whole file, so check the reported error before restarting.
 
-If you already use one of the new defaults (`Ctrl+Alt+C`, `Ctrl+Alt+U`, `Ctrl+Alt+Return` or `Shift+Return`) for another File Browser command, keep your binding by assigning a different chord or `[]` to the new command in the same keybinds table. For example, set `copy_target_path = []` to keep a custom `Ctrl+Alt+C` binding.
+If a File Browser command already uses `Ctrl+Alt+C`, `Ctrl+Alt+U`, `Ctrl+Alt+Return` or `Shift+Return`, the corresponding Copy Location or Open In default stays unassigned while that key is in use. An explicit assignment for any of these commands, including one that matches its default, still follows the usual same-scope conflict rule.
 
 | Scope | Commands |
 | --- | --- |

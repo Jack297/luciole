@@ -158,6 +158,7 @@ namespace {
     std::string_view key;
     std::string_view label;
     std::array<std::string_view, luciole::kMaxKeybindChords> defaults;
+    bool fallback = false;
   };
 
   // Keybind commands in enum order; defaults use display spelling.
@@ -200,12 +201,14 @@ namespace {
        KeybindScope::FileBrowser,
        "open_in_other_pane",
        "Open in Other Pane",
-       {"Ctrl+Alt+Return"}},
+       {"Ctrl+Alt+Return"},
+       true},
       {KeybindCommand::OpenInNewWindow,
        KeybindScope::FileBrowser,
        "open_in_new_window",
        "Open in New Window",
-       {"Shift+Return"}},
+       {"Shift+Return"},
+       true},
       {KeybindCommand::ToggleSelection,
        KeybindScope::FileBrowser,
        "toggle_selection",
@@ -216,8 +219,13 @@ namespace {
       {KeybindCommand::CreateFile, KeybindScope::FileBrowser, "create_file", "Create File", {"Ctrl+Alt+N"}},
       {KeybindCommand::Cut, KeybindScope::FileBrowser, "cut", "Cut", {"Ctrl+X"}},
       {KeybindCommand::Copy, KeybindScope::FileBrowser, "copy", "Copy", {"Ctrl+C"}},
-      {KeybindCommand::CopyTargetPath, KeybindScope::FileBrowser, "copy_target_path", "Copy Path", {"Ctrl+Alt+C"}},
-      {KeybindCommand::CopyTargetUri, KeybindScope::FileBrowser, "copy_target_uri", "Copy URI", {"Ctrl+Alt+U"}},
+      {KeybindCommand::CopyTargetPath,
+       KeybindScope::FileBrowser,
+       "copy_target_path",
+       "Copy Path",
+       {"Ctrl+Alt+C"},
+       true},
+      {KeybindCommand::CopyTargetUri, KeybindScope::FileBrowser, "copy_target_uri", "Copy URI", {"Ctrl+Alt+U"}, true},
       {KeybindCommand::Paste, KeybindScope::FileBrowser, "paste", "Paste", {"Ctrl+V"}},
       {KeybindCommand::Trash, KeybindScope::FileBrowser, "trash", "Move to Trash", {"Delete"}},
       {KeybindCommand::DeletePermanently,
@@ -285,6 +293,9 @@ namespace {
       {KeybindCommand::SelectTab9, KeybindScope::TabsAndWindows, "select_tab_9", "Select Last Tab", {"Alt+9"}},
   });
   static_assert(kKeybindSpecs.size() == luciole::kKeybindCommandCount);
+  static_assert(std::ranges::all_of(kKeybindSpecs, [](const KeybindSpec& spec) {
+    return !spec.fallback || (!spec.defaults[0].empty() && spec.defaults[1].empty());
+  }));
   static_assert(
       []<std::size_t... I>(std::index_sequence<I...>) {
         return ((kKeybindSpecs[I].command == static_cast<KeybindCommand>(I)) && ...);
@@ -411,10 +422,40 @@ namespace luciole {
   }
 
   const KeybindChords& KeybindConfig::chords(KeybindCommand command) const {
+    static constexpr KeybindChords unassigned{};
+    return m_suppressedDefaults.test(static_cast<std::size_t>(command)) ? unassigned : storedChords(command);
+  }
+
+  const KeybindChords& KeybindConfig::storedChords(KeybindCommand command) const {
     return m_chords[static_cast<std::size_t>(command)];
   }
 
-  KeybindChords& KeybindConfig::chords(KeybindCommand command) { return m_chords[static_cast<std::size_t>(command)]; }
+  bool KeybindConfig::hasExplicitFallback(KeybindCommand command) const {
+    return m_explicitFallbacks.test(static_cast<std::size_t>(command));
+  }
+
+  void KeybindConfig::setChords(KeybindCommand command, KeybindChords chords) {
+    const auto index = static_cast<std::size_t>(command);
+    m_chords[index] = chords;
+    m_explicitFallbacks.set(index, kKeybindSpecs[index].fallback);
+    m_suppressedDefaults.reset(index);
+  }
+
+  void KeybindConfig::resolveFallbackDefaults(const KeybindConfig* inherited) {
+    if (inherited != nullptr) {
+      m_explicitFallbacks |= inherited->m_explicitFallbacks;
+    }
+    m_suppressedDefaults.reset();
+    for (const auto& spec : kKeybindSpecs) {
+      if (!spec.fallback || hasExplicitFallback(spec.command)) {
+        continue;
+      }
+      const auto& chord = storedChords(spec.command).front();
+      if (chord && keybindConflict(*this, spec.command, 0, *chord)) {
+        m_suppressedDefaults.set(static_cast<std::size_t>(spec.command));
+      }
+    }
+  }
 
   namespace {
     KeybindConfig& activeKeybindStorage() {
@@ -529,7 +570,7 @@ namespace luciole {
 
   void
   setKeybindChord(KeybindConfig& config, KeybindCommand command, std::size_t slot, std::optional<KeybindChord> chord) {
-    auto& chords = config.chords(command);
+    const auto& chords = config.chords(command);
     if (slot >= chords.size()) {
       return;
     }
@@ -549,6 +590,6 @@ namespace luciole {
         compact[at] = normalizeKeybindChord(*chord);
       }
     }
-    chords = compact;
+    config.setChords(command, compact);
   }
 } // namespace luciole

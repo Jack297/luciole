@@ -190,8 +190,9 @@ namespace {
         }
         parsed[index++] = *chord;
       }
-      config.chords(*command) = parsed;
+      config.setChords(*command, parsed);
     }
+    config.resolveFallbackDefaults();
     return luciole::keybindConfigValid(config) ? std::optional(config) : std::nullopt;
   }
   template <class T>
@@ -253,11 +254,12 @@ namespace {
     toml::table commands;
     for (const auto scope : luciole::kKeybindScopes) {
       for (const auto command : luciole::keybindCommands(scope)) {
-        if (value.chords(command) == inherited.chords(command)) {
+        if (value.storedChords(command) == inherited.storedChords(command)
+            && value.hasExplicitFallback(command) == inherited.hasExplicitFallback(command)) {
           continue;
         }
         toml::array chords;
-        for (const auto& chord : value.chords(command)) {
+        for (const auto& chord : value.storedChords(command)) {
           if (chord) {
             chords.push_back(luciole::keybindChordSpec(*chord));
           }
@@ -903,6 +905,9 @@ luciole::AtomicWriteState luciole::ConfigService::saveOverrides(std::span<const 
         const auto previous = *patch;
         for (const auto& edit : edits) {
           editPatch(*patch, edit);
+        }
+        if (auto& keybinds = std::get<std::optional<KeybindConfig>>(*patch)) {
+          keybinds->resolveFallbackDefaults(&inherited.browser.keybinds);
         }
         applyPatch(candidate, *patch);
         if (*patch == previous) {

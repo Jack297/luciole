@@ -1589,6 +1589,65 @@ namespace {
     TEST_CHECK(!luciole::keybindConfigValid(conflict));
   }
 
+  void testShortcutDefaultsYieldToSavedBindings() {
+    using K = luciole::KeybindCommand;
+    constexpr auto table = "[browser.keybinds]\n";
+    const std::array defaults{
+        std::pair{K::CopyTargetPath, "Ctrl+Alt+C"}, std::pair{K::CopyTargetUri, "Ctrl+Alt+U"},
+        std::pair{K::OpenInOtherPane, "Ctrl+Alt+Return"}, std::pair{K::OpenInNewWindow, "Shift+Return"}
+    };
+    for (const auto& [command, spec] : defaults) {
+      const auto custom = std::format("{}search = [\"{}\"]\n", table, spec);
+      for (const auto* layer : {"config.toml", "settings.toml"}) {
+        Fixture fixture;
+        fixture.write(layer, custom);
+        luciole::ConfigService service(fixture.paths());
+        TEST_CHECK(service.reload());
+        const auto& config = service.settings().browser.keybinds;
+        TEST_CHECK(config.chords(K::Search).front() == luciole::parseKeybindChord(spec));
+        TEST_CHECK(luciole::keybindShortcutLabel(config, command).empty());
+        const std::array edit{luciole::OverrideEdit{luciole::BrowserPreference::ShowHidden, true}};
+        TEST_CHECK(service.saveOverrides(edit) == luciole::AtomicWriteState::Durable);
+        TEST_CHECK(!read(fixture.paths().overrides).contains(luciole::keybindCommandKey(command)));
+        TEST_CHECK(service.reload());
+        TEST_CHECK(!service.settings().browser.keybinds.chords(command).front());
+      }
+    }
+
+    Fixture fixture;
+    fixture.write("config.toml", "[browser.keybinds]\nsearch = [\"Ctrl+Alt+C\"]\n");
+    luciole::ConfigService service(fixture.paths());
+    TEST_CHECK(service.reload());
+    auto edited = service.settings().browser.keybinds;
+    luciole::setKeybindChord(edited, K::Search, 0, luciole::parseKeybindChord("Ctrl+F"));
+    const std::array edit{luciole::OverrideEdit{luciole::BrowserPreference::Keybinds, edited}};
+    TEST_CHECK(service.saveOverrides(edit) == luciole::AtomicWriteState::Durable);
+    TEST_CHECK(service.reload());
+    TEST_CHECK(luciole::keybindShortcutLabel(service.settings().browser.keybinds, K::CopyTargetPath) == "Ctrl+Alt+C");
+
+    Fixture pinned;
+    luciole::ConfigService pinnedService(pinned.paths());
+    TEST_CHECK(pinnedService.reload());
+    auto pinnedKeys = pinnedService.settings().browser.keybinds;
+    luciole::setKeybindChord(pinnedKeys, K::CopyTargetPath, 0, luciole::parseKeybindChord("Ctrl+Alt+C"));
+    const std::array pin{luciole::OverrideEdit{luciole::BrowserPreference::Keybinds, pinnedKeys}};
+    TEST_CHECK(pinnedService.saveOverrides(pin) == luciole::AtomicWriteState::Durable);
+    TEST_CHECK(read(pinned.paths().overrides).contains("copy_target_path"));
+    pinned.write("config.toml", "[browser.keybinds]\nsearch = [\"Ctrl+Alt+C\"]\n");
+    TEST_CHECK(!pinnedService.reload());
+
+    // The literal default is still an explicit binding, even across configuration layers.
+    fixture.write("config.toml", "[browser.keybinds]\ncopy_target_path = [\"Ctrl+Alt+C\"]\n");
+    fixture.write("settings.toml", "[browser.keybinds]\nsearch = [\"Ctrl+Alt+C\"]\n");
+    TEST_CHECK(!service.reload());
+    fixture.write("config.toml", "[browser.keybinds]\nsearch = [\"Ctrl+Alt+C\"]\n");
+    fixture.write("settings.toml", "[browser.keybinds]\ncopy_target_path = [\"Ctrl+Alt+C\"]\n");
+    TEST_CHECK(!service.reload());
+    fixture.write("settings.toml", "[browser.keybinds]\ncopy_target_path = []\nsearch = [\"Ctrl+F\"]\n");
+    TEST_CHECK(service.reload());
+    TEST_CHECK(!service.settings().browser.keybinds.chords(K::CopyTargetPath).front());
+  }
+
 } // namespace
 
 int main() {
@@ -1631,6 +1690,7 @@ int main() {
     testThumbnailSettings();
     testKeybinds();
     testFolderAndClipboardKeybinds();
+    testShortcutDefaultsYieldToSavedBindings();
     testOverrideSaving();
     std::println("settings checks passed");
     return 0;
