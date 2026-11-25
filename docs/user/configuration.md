@@ -36,6 +36,7 @@ confirm_permanent_deletion = true
 restore_last_window = false
 single_window = false
 compact_menus = true
+context_menu_icons = true
 show_close_buttons = true
 background_opacity = 1.0
 corner_radius_scale = 1.0
@@ -82,6 +83,7 @@ All keys below belong in `[browser]`. Dimensions are logical pixels unless state
 | `always_show_tab_bar` | `true` | Keep the tab bar visible when a window has only one tab |
 | `always_show_status_bar` | `false` | Keep the status bar visible when idle, showing the item count and free space |
 | `compact_menus` | `true` | Reduce the row height and padding in context menus without shrinking their text |
+| `context_menu_icons` | `true` | Show action glyphs at the start of context menu rows. Disabling removes the whole icon column; labels, checkmarks, shortcuts and submenu arrows stay in place |
 | `show_close_buttons` | `true` | Show the glyph close buttons on tabs, dialogs, panes, the preview and archives. Disable to hide them live; the window controls, Escape and Close/Cancel actions still close things |
 | `reduce_animations` | `false` | Skip animated transitions, such as file entries fading in as they scroll into Grid and List views, smooth scrolling and the sidebar drawer. Applies live |
 | `use_ssd` | `true` | Let the compositor draw the title bar and borders (server-side decoration) when it supports them. Disable to always draw Luciole's own (client-side decoration). Open windows switch live |
@@ -192,7 +194,7 @@ Chords use key names such as `Return`, `Escape`, `Tab`, `space`, `BackSpace`, `D
 
 User bookmarks live in `$XDG_CONFIG_HOME/gtk-3.0/bookmarks`, defaulting to `~/.config/gtk-3.0/bookmarks`, shared with Nemo, Nautilus and GTK file choosers. Each line contains a URI and an optional label separated by a space. The older `~/.gtk-bookmarks` is read as a fallback when the modern file has not been found; edits go to the modern path. Read-only or symlink-managed files can be displayed, but Luciole refuses edits that would replace a read-only or linked file. Old Luciole pins are not migrated.
 
-Built-in Places layout, optional last-window tab state and the last file picker folder remain in `$XDG_STATE_HOME/luciole/state.toml`, defaulting to `~/.local/state/luciole/state.toml`. Cached user rows there preserve their placement among built-ins; their contents always come from the shared bookmark file. Deleting a shared user bookmark removes it from Luciole even when an old cache row remains. Tab restoration is controlled by `browser.restore_last_window`.
+Built-in Places layout, Places separators and their headings, optional last-window tab state and the last file picker folder remain in `$XDG_STATE_HOME/luciole/state.toml`, defaulting to `~/.local/state/luciole/state.toml`. Cached user rows there preserve their placement among built-ins; their contents always come from the shared bookmark file. Deleting a shared user bookmark removes it from Luciole even when an old cache row remains. Tab restoration is controlled by `browser.restore_last_window`.
 
 Per-folder sort and view choices live in `$XDG_STATE_HOME/luciole/folder_views.toml`, one `[[folders]]` row per folder URI with optional `sort_by`, `sort_descending`, `directories_first`, `hidden_last` and `view_mode` (`"list"` or `"grid"`) fields. Invalid rows are skipped. Luciole replaces an unreadable file with its in-memory settings the next time a folder's settings change. It keeps the 4096 most recently changed folders, or fewer when their rows would make the file larger than 240 KiB; the least recently changed go first.
 

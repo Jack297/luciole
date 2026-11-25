@@ -871,7 +871,7 @@ void WorkspaceApplication::pointer(const PointerEvent& event) {
     }
     if (event.type == PointerEvent::Type::Button
         && event.pressed
-        && event.button == BTN_LEFT
+        && (event.button == BTN_LEFT || event.button == BTN_RIGHT)
         && host->tabScroll->containsScenePoint(x, y)) {
       bool child = host->newTabButton->containsScenePoint(x, y);
       for (const auto& [tab, button] : host->buttons) {
@@ -880,7 +880,18 @@ void WorkspaceApplication::pointer(const PointerEvent& event) {
         Node::absolutePosition(button, bx, by);
         child |= x >= bx && x <= bx + button->width();
       }
-      if (!child) {
+      // The empty strip works as a title bar, as browsers' tab strips do: double-click toggles maximized and a right
+      // click opens the compositor's window menu. A compositor that decorates the window may still draw no title bar.
+      const bool titlebar = !child && !host->surface.fullscreen();
+      if (titlebar && event.button == BTN_RIGHT) {
+        host->surface.showWindowMenu(event.serial, static_cast<std::int32_t>(x), static_cast<std::int32_t>(y));
+        return;
+      }
+      if (!child && event.button == BTN_LEFT) {
+        if (titlebar && host->stripMove.doubleClick(event.time, x, y)) {
+          host->surface.toggleMaximized();
+          return;
+        }
         host->stripMove.press(event.serial, x, y);
         return;
       }
@@ -1657,25 +1668,32 @@ void WorkspaceApplication::layoutTabDrag(Host& host, Renderer& renderer) const {
 void WorkspaceApplication::tabMenu(Host& host, luciole::TabId tab, float x, float y) {
   auto& page = *m_pages.at(m_model.windows().at(host.id).active);
   std::vector<ContextMenuControlEntry> entries{
-      {.id = 0, .label = "New Tab", .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::NewTab)},
+      {.id = 0,
+       .label = "New Tab",
+       .glyph = "plus",
+       .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::NewTab)},
       {.id = 1,
        .label = "Duplicate Tab",
+       .glyph = "copy",
        .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::DuplicateTab)},
       {.id = 2,
        .label = "Close Tab",
+       .glyph = "x",
        .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::CloseTab)},
       {.id = 3,
        .label = "Reopen Closed Tab",
+       .glyph = "history",
        .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::ReopenTab)},
       {.label = "", .separator = true},
       {.id = 4,
        .label = "Split View",
+       .glyph = "columns",
        .shortcut = luciole::keybindShortcutOptionalLabel(luciole::KeybindCommand::SplitView)},
-      {.id = 5, .label = "Swap Panes"}
+      {.id = 5, .label = "Swap Panes", .glyph = "arrows-cross"}
   };
   if (!m_defaults.singleWindow) {
-    entries.push_back({.id = 6, .label = "Move Tab to New Window"});
-    entries.push_back({.id = 7, .label = "Move Tab to Next Window"});
+    entries.push_back({.id = 6, .label = "Move Tab to New Window", .glyph = "device-desktop"});
+    entries.push_back({.id = 7, .label = "Move Tab to Next Window", .glyph = "arrow-right"});
   }
   const auto window = host.id;
   page.workspaceMenu(
