@@ -4,7 +4,7 @@
 
 Use Ctrl+C or Ctrl+X for the selection and Ctrl+V in the destination folder. Paste is also available from context menus, including List view. Clipboard transfers and drag/drop work between Luciole windows; the same transport supports other file managers.
 
-Copy Location → Path (Ctrl+Alt+C) copies the selected item paths as text; URI (Ctrl+Alt+U) copies their URIs. Multiple items are separated by newlines. These defaults can be changed in Settings → Keybinds; ordinary Ctrl+C keeps its file-transfer behavior.
+In the Copy Location submenu, Path (Ctrl+Alt+C) copies the selected paths as text, and URI (Ctrl+Alt+U) copies their URIs. Multiple items are separated by newlines. Change these shortcuts on the Keybinds page in Settings. Ctrl+C still copies items for file transfers.
 
 Ctrl+V also accepts an image on the clipboard (PNG, JPEG, WebP, GIF, BMP, TIFF or SVG): Luciole asks for a name, defaulting to `Pasted image` with the matching extension, and saves the image as a new file in the current folder. An existing name is reported rather than overwritten. The save uses the same staged creation path as New File, so it joins the Undo history; like other creation it needs a folder with a native path, which includes mounted SFTP and WebDAV locations.
 
