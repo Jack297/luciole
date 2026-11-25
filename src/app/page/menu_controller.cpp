@@ -56,6 +56,8 @@ namespace {
   };
 
   constexpr float kShortSubmenuWidth = 200.0F;
+  // Fits a glyph, "Other Pane" and "Ctrl+Alt+Enter" without clipping the shortcut.
+  constexpr float kOpenInSubmenuWidth = 240.0F;
 
   // Appends a separator unless `entries` is empty or already ends with one.
   void addSeparator(std::vector<ContextMenuControlEntry>& entries) {
@@ -379,7 +381,7 @@ void MenuController::showOpenInMenu(const luciole::ActionRequest& request) {
             entry->navigationLocation(), std::nullopt
         );
       },
-      kShortSubmenuWidth
+      kOpenInSubmenuWidth
   );
 }
 
