@@ -158,6 +158,7 @@ namespace {
     std::string_view key;
     std::string_view label;
     std::array<std::string_view, luciole::kMaxKeybindChords> defaults;
+    // Unless configured explicitly, the default stays unassigned while another command in its scope uses the chord.
     bool fallback = false;
   };
 
