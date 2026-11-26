@@ -82,12 +82,12 @@ namespace {
     };
   }
 
-  std::unique_ptr<Label> plainLabel(std::string_view text, float size, ColorSpec color, float grow) {
+  std::unique_ptr<Label> plainLabel(std::string_view text, float size, ColorSpec color, TextAlign align, float grow) {
     return ui::label(
         {.text = std::string(text),
          .fontSize = size,
          .color = color,
-         .maxLines = 2,
+         .textAlign = align,
          .flexGrow = grow,
          .configure = [](Label& label) { label.setUseMarkup(false); }}
     );
@@ -120,9 +120,11 @@ void ShortcutsController::open() {
     }
     content->addChild(
         ui::row(
-            {.justify = FlexJustify::SpaceBetween, .gap = Style::spaceMd},
-            plainLabel(text, Style::fontSizeBody, colorSpecFromRole(ColorRole::OnSurface), 1.0F),
-            plainLabel(keys, Style::fontSizeCaption, colorSpecFromRole(ColorRole::OnSurfaceVariant), 0.0F)
+            {.gap = Style::spaceMd},
+            plainLabel(text, Style::fontSizeBody, colorSpecFromRole(ColorRole::OnSurface), TextAlign::Start, 1.0F),
+            plainLabel(
+                keys, Style::fontSizeCaption, colorSpecFromRole(ColorRole::OnSurfaceVariant), TextAlign::End, 2.0F
+            )
         )
     );
   };
