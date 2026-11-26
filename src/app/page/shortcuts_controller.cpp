@@ -120,7 +120,7 @@ void ShortcutsController::open() {
     }
     content->addChild(
         ui::row(
-            {.gap = Style::spaceMd},
+            {.align = FlexAlign::Start, .gap = Style::spaceMd},
             plainLabel(text, Style::fontSizeBody, colorSpecFromRole(ColorRole::OnSurface), TextAlign::Start, 1.0F),
             plainLabel(
                 keys, Style::fontSizeCaption, colorSpecFromRole(ColorRole::OnSurfaceVariant), TextAlign::End, 2.0F
