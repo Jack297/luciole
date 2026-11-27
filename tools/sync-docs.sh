@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Sync docs/user/*.md into ../noctalia-docs/src/content/docs/luciole/ as .mdx.
+# Sync docs/user/*.md (flat, no subdirectories) into ../noctalia-docs/src/content/docs/luciole/ as .mdx.
 # Existing .mdx files keep their hand-written frontmatter (title, description); only the body is refreshed. New files
 # get a title from their first H1, and a leading H1 is dropped from the body. Stale .mdx files without a source are
-# removed after a successful sync.
+# removed after a successful sync. GitHub callouts (> [!NOTE], > [!TIP], > [!WARNING]) become Starlight asides, and
+# docs/user/assets/ is copied to src/assets/luciole/.
 # Source docs use relative .md links so they render on GitHub; the site serves pages at /luciole/<name>/, so sibling
 # links are rewritten here. Links to repository files (../../X) and design notes (../design/X) point at GitHub instead:
 # design notes are maintainer-only and never synced. Any relative .md link that survives the rewrite is reported, since
@@ -29,6 +30,7 @@ for md in "$repo_root"/docs/user/*.md; do
 done
 link_exprs+=(-e "s|](\.\./design/|]($blob_url/docs/design/|g")
 link_exprs+=(-e "s|](\.\./\.\./|]($blob_url/|g")
+link_exprs+=(-e "s|](assets/|](../../../assets/luciole/|g")
 
 for md in "$repo_root"/docs/user/*.md; do
     [[ -e "$md" ]] || continue
@@ -67,7 +69,15 @@ title: $title
             seen == 0 && /^# / { seen = 1; dropped = 1; next }
             dropped == 1 && /^$/ { dropped = 0; seen = 1; next }
             { seen = 1; print }
-        ' "$md" | sed "${link_exprs[@]}"
+        ' "$md" | awk '
+            /^> \[!NOTE\]$/ { print ":::note"; box = 1; next }
+            /^> \[!TIP\]$/ { print ":::tip"; box = 1; next }
+            /^> \[!WARNING\]$/ { print ":::caution"; box = 1; next }
+            box && /^>/ { sub(/^> ?/, ""); print; next }
+            box { print ":::"; box = 0 }
+            { print }
+            END { if (box) print ":::" }
+        ' | sed "${link_exprs[@]}"
     } > "$mdx.tmp"
 
     leftover="$(grep -Eo '\]\([^)]*\.md[^)]*\)' "$mdx.tmp" | grep -Ev '\]\(https?://' || true)"
@@ -88,3 +98,18 @@ for mdx in "$dest_dir"/*.mdx; do
     rm "$mdx"
     printf 'removed stale %s\n' "${mdx#"$site_root"/}"
 done
+
+# Images referenced as ](assets/NAME) live in docs/user/assets/ and are copied to the site's src/assets/luciole/.
+asset_source="$repo_root/docs/user/assets"
+asset_dest="$site_root/src/assets/luciole"
+if [[ -d "$asset_source" ]]; then
+    mkdir -p "$asset_dest"
+    cp -f "$asset_source"/* "$asset_dest"/
+    for asset in "$asset_dest"/*; do
+        [[ -e "$asset" ]] || continue
+        if [[ ! -e "$asset_source/$(basename "$asset")" ]]; then
+            rm "$asset"
+            printf 'removed stale %s\n' "${asset#"$site_root"/}"
+        fi
+    done
+fi

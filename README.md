@@ -48,10 +48,10 @@ To understand the values and philosophy guiding the project, read our [ethos](ht
 - **Browsing:** grid, list and optional Miller columns, with tabs, separate windows, split view, adjustable zoom and sortable detail columns
 - **Navigation and search:** clickable breadcrumbs, path completion, recursive filename search and instant filtering of the current folder
 - **Thumbnails and previews:** images, video, text and PDF pages, plus file and media metadata
-- **File operations:** copy, move, links, batch rename, folder merging, conflict choices, Trash and restoration, with [Undo and Redo](docs/user/file-operations.md#undo-and-redo)
-- **Archives:** browse, create and extract, with password prompts for [encrypted formats](docs/user/file-operations.md#archives)
+- **File operations:** copy, move, links, batch rename, folder merging, conflict choices, Trash and restoration, with [Undo and Redo](docs/user/undo-redo.md)
+- **Archives:** browse, create and extract, with password prompts for [encrypted formats](docs/user/archives.md#supported-inputs)
 - **Places:** an adaptive sidebar with shared bookmarks, mounted drives, LUKS unlock prompts and optional folder trees
-- **File picker:** a [portal backend](docs/user/installation.md#use-luciole-as-the-file-picker) that provides Luciole's Open and Save dialogs for applications using the FileChooser portal; [xdg-desktop-portal-umbriel](https://github.com/noctalia-dev/xdg-desktop-portal-umbriel) selects it automatically when installed, and other desktops can enable it in `portals.conf`
+- **File picker:** a [portal backend](docs/user/file-picker.md) that provides Luciole's Open and Save dialogs for applications using the FileChooser portal; [xdg-desktop-portal-umbriel](https://github.com/noctalia-dev/xdg-desktop-portal-umbriel) selects it automatically when installed, and other desktops can enable it in `portals.conf`
 - **Desktop integration:** SFTP, SMB and WebDAV locations, Open With, terminal actions and [custom scripts](docs/user/scripts.md)
 - **Configuration:** built-in settings, live-reloaded TOML, icon themes and configurable colors
 

@@ -32,6 +32,7 @@
 #include "ui/controls/tooltip_presenter.h"
 #include "ui/palette.h"
 #include "ui/style.h"
+#include "util/string_utils.h"
 #include "wayland/popup_surface.h"
 #include "wayland/text_input_service.h"
 #include "wayland/toplevel_surface.h"
@@ -62,6 +63,8 @@ namespace {
   // A tab being dragged fades in the strip while its copy follows the pointer.
   constexpr float kDraggedTabOpacity = 0.4F;
   constexpr float kTabGhostOpacity = 0.92F;
+  // Round close chip: tight around the glyph so the tab keeps no unused padding around it.
+  constexpr float kTabCloseSize = 16.0F;
   // Below this a dropped tab opens in a new window rather than moving within the strip.
   constexpr float kTabDetachY = kTabStripHeight + kNavigationToolbarHeight - Style::spaceXs;
   // Width of the zone at each end of the tab bar that scrolls it while a tab is dragged or the pointer rests there,
@@ -104,6 +107,7 @@ WorkspaceApplication::WorkspaceApplication(
     for (auto& [id, host] : m_hosts) {
       (void)id;
       host->surface.setUseSSD(m_defaults.useSSD);
+      syncWindowTitle(*host);
     }
   });
   m_clipboard.setChangedCallback([this] {
@@ -492,7 +496,7 @@ bool WorkspaceApplication::running() {
     m_hub.shutdown();
   }
   m_hub.update(m_focused);
-  bool busy = m_hub.busy() || m_thumbnails.clearing() || m_pins.busy();
+  bool busy = (live ? m_hub.busy() : m_hub.shutdownPending()) || m_thumbnails.clearing() || m_pins.busy();
   for (auto& [id, page] : m_pages) {
     if (!live) {
       page->shutdown();
@@ -1884,7 +1888,10 @@ void WorkspaceApplication::rebuildStrip(Host& host, const luciole::TabWindow& wi
          .minWidth = 96.0F,
          .maxWidth = 200.0F,
          .paddingV = 0.0F,
-         .paddingH = Style::spaceXs,
+         // Equal margin above, below, and right of the round close chip, so it sits concentric with the tab corner.
+         .paddingRight =
+             Style::closeButtonsEnabled() ? (Style::controlHeightSm - kTabCloseSize) / 2.0F : Style::spaceMd,
+         .paddingLeft = Style::spaceMd,
          .gap = Style::spaceXs,
          .onClick = [this, windowId, id] { select(windowId, id); },
          .configure =
@@ -1902,14 +1909,15 @@ void WorkspaceApplication::rebuildStrip(Host& host, const luciole::TabWindow& wi
             {.out = &close,
              .glyph = "x",
              .glyphSize = Style::baseGlyphSize,
-             .controlHeight = 24.0F,
+             .controlHeight = kTabCloseSize,
              .variant = ButtonVariant::Ghost,
              .customPalette = closeTabPalette(foreground),
              .tooltip = "Close tab",
              .followsCloseButtons = true,
-             .minWidth = 24.0F,
-             .maxWidth = 24.0F,
+             .minWidth = kTabCloseSize,
+             .maxWidth = kTabCloseSize,
              .padding = 0.0F,
+             .radius = kTabCloseSize / 2.0F,
              .onClick = [this, windowId, id] { defer(windowId, id, WorkspaceCommand::Close); },
              .configure = [](Button& button) { button.setZIndex(2); }}
         )
@@ -1936,7 +1944,7 @@ void WorkspaceApplication::rebuildStrip(Host& host, const luciole::TabWindow& wi
       {.out = &host.strip,
        .align = FlexAlign::Center,
        .gap = Style::spaceXs,
-       .paddingH = Style::spaceSm,
+       .paddingH = kWorkspaceInset,
        .height = kTabStripHeight,
        .participatesInLayout = false},
       std::move(scroll),
@@ -1990,6 +1998,25 @@ void WorkspaceApplication::rebuildStrip(Host& host, const luciole::TabWindow& wi
   strip->setVisible(host.stripVisible);
   strip->setZIndex(50);
   host.root->addChild(std::move(strip));
+}
+
+void WorkspaceApplication::syncWindowTitle(Host& host) {
+  const auto window = m_model.windows().find(host.id);
+  if (host.chooser || host.closed || !host.surface.isRunning() || window == m_model.windows().end()) {
+    return;
+  }
+  std::string title = "Luciole";
+  if (m_defaults.showFolderInTitle) {
+    // The tab label of the active pane, so the strip and the title never disagree.
+    const auto page = m_pages.find(window->second.active);
+    if (page != m_pages.end() && page->second->location()) {
+      title = StringUtils::windowTitleSingleLine(page->second->title() + " - Luciole");
+    }
+  }
+  if (title != host.title) {
+    host.title = std::move(title);
+    host.surface.setTitle(host.title);
+  }
 }
 
 void WorkspaceApplication::syncTooltip(Host& host) {
@@ -2149,6 +2176,7 @@ void WorkspaceApplication::prepare(Host& host) {
     host.chromeOwner = window.active;
   }
   rebuildStrip(host, window);
+  syncWindowTitle(host);
   const float stripHeight = host.stripVisible ? kTabStripHeight : 0.0F;
   host.splitButton->setSelected(window.secondary.has_value());
   std::vector<luciole::TabId> visible{window.primary};

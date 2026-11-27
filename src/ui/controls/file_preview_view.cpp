@@ -1,5 +1,6 @@
 #include "ui/controls/file_preview_view.h"
 
+#include "browser/location_presentation.h"
 #include "fs/gio_ptr.h"
 #include "ui/browser/preview_layout.h"
 #include "ui/builders.h"
@@ -71,7 +72,10 @@ FilePreviewView::FilePreviewView(
   body->content()->setGap(Style::spaceMd);
   auto image = std::make_unique<luciole::FileIcon>(icons, 192);
   m_image = image.get();
-  body->content()->addChild(ui::row({.justify = FlexJustify::Center}, std::move(image)));
+  // Transparent padding keeps the image's drop shadow inside the scroll view.
+  body->content()->addChild(
+      ui::row({.justify = FlexJustify::Center, .padding = luciole::kPreviewImageInset}, std::move(image))
+  );
   const auto literal = [](Label& label) { label.setUseMarkup(false); };
   body->content()->addChild(
       ui::label({.out = &m_name, .fontWeight = FontWeight::SemiBold, .maxLines = 3, .configure = literal})
@@ -193,6 +197,9 @@ void FilePreviewView::sync(
         fileFacts.push_back({"Modified", formatted.get()});
       }
     }
+    fileFacts.push_back(
+        {.label = "Location", .value = luciole::locationEditText(entry->location()), .singleLine = true}
+    );
     m_image->bind(luciole::iconSource(entry->icon), colorSpecFromRole(ColorRole::OnSurface));
   }
   const auto* pixels = snapshot.image && snapshot.image->pixels ? &*snapshot.image->pixels : nullptr;

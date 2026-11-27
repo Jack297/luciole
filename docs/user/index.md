@@ -1,19 +1,27 @@
 # Luciole
 
-Luciole is a native Wayland file manager with list, grid and optional Miller column views, tabs, split view and a side preview. It runs independently of the Noctalia shell.
+Luciole is a file manager for Wayland. Folders with thousands of files scroll without stuttering, and thumbnails fill in while you keep working. It is written with its own toolkit instead of Qt or GTK, and it does not need the Noctalia shell to run.
 
-The application is in development. The guides below describe current features.
+![Luciole showing a folder of images in grid view with the side preview open](assets/index-hero.webp)
 
-## Start here
+## What it does
 
-1. [Install and start Luciole](installation.md).
-2. Learn [navigation, search, selection and views](browsing.md).
-3. Adjust [settings and configuration](configuration.md).
-4. Use [file operations, Trash, archives and Properties](file-operations.md).
-5. Add [custom scripts or explicitly run a program](scripts.md).
+- Shows folders as a grid, a list or columns, with tabs and a split view for two folders side by side.
+- Previews images, video, text and PDFs in a side panel, so you can check a file without opening it.
+- Copies, moves, renames and deletes, with undo and redo and a Trash you can restore from.
+- Browses archives like folders and can extract or create them.
+- Opens SFTP, SMB and WebDAV locations next to your local folders.
+- Can answer the Open and Save dialogs of other applications.
+- Takes its colors from the Noctalia palette when one is installed.
 
-Settings opens inside the existing window with Ctrl+,. Preferences save automatically. About is available from the main menu.
+## Where to start
 
-## Help and contributing
+1. [Install Luciole](installation.md) from a package, Nix or Guix, or [build it from source](building.md).
+2. Take the [window tour](getting-started.md) and learn the shortcuts you will use most.
+3. Pick a [view](views.md), set up your [sidebar](sidebar.md) and open [Settings](settings.md).
 
-Report issues through the [project tracker](https://github.com/noctalia-dev/luciole/issues). Include the Luciole version, distribution, relevant helper/provider versions and a small reproduction when possible. For development and packaging, see [Contributing](../../CONTRIBUTING.md), [design notes](../design/README.md) and [Packaging](../../PACKAGING.md).
+Luciole is still in development; these guides describe what works today.
+
+## Get help
+
+Report problems on the [issue tracker](https://github.com/noctalia-dev/luciole/issues) or ask on [Discord](https://discord.noctalia.dev). Include the Luciole version, your distribution and a small reproduction. For development, see [Contributing](../../CONTRIBUTING.md), the [design notes](../design/README.md) and [Packaging](../../PACKAGING.md).

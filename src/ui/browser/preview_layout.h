@@ -2,11 +2,16 @@
 
 #include "model/thumbnail_options.h"
 #include "ui/style.h"
+#include "ui/surface_shadow.h"
 
 #include <algorithm>
 #include <cmath>
 
 namespace luciole {
+  // Room around the preview image for its drop shadow; the image budget leaves it free so the scroll view does not clip
+  // it.
+  inline constexpr float kPreviewImageInset = static_cast<float>(surface_shadow::kBlurRadius);
+
   struct PreviewImageLayout {
     float width, height;
     int pixels;
@@ -14,9 +19,11 @@ namespace luciole {
 
   inline PreviewImageLayout
   previewImageLayout(int sourceWidth, int sourceHeight, float width, float height, float scale, bool quick = false) {
-    const float budget = std::max(40.0F, width - Style::spaceMd * 2 - Style::scrollbarWidth - Style::scrollbarGap);
+    const float budget = std::max(
+        40.0F, width - Style::spaceMd * 2 - Style::scrollbarWidth - Style::scrollbarGap - kPreviewImageInset * 2
+    );
     const float imageWidth = quick ? std::min(budget, 460.0F) : budget;
-    const float maximumHeight = std::max(80.0F, height - 250.0F);
+    const float maximumHeight = std::max(80.0F, height - 250.0F - kPreviewImageInset * 2);
     const bool known = sourceWidth > 0 && sourceHeight > 0;
     const float imageHeight = std::clamp(
         known ? imageWidth * static_cast<float>(sourceHeight) / static_cast<float>(sourceWidth) : 96.0F, 48.0F,
