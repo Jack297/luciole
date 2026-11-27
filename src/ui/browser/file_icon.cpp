@@ -4,17 +4,13 @@
 #include "render/core/texture_manager.h"
 #include "render/scene/image_node.h"
 #include "render/scene/rect_node.h"
+#include "ui/browser/preview_layout.h"
 #include "ui/builders.h"
 #include "ui/surface_shadow.h"
 
 #include <algorithm>
 #include <cmath>
 #include <tuple>
-
-namespace {
-  // Softer than the popup default (0.55): the image rests on the pane rather than floating over content.
-  constexpr ShadowStyle kPreviewShadow{.direction = ShadowDirection::Down, .alpha = 0.35F};
-} // namespace
 
 luciole::FileIcon::FileIcon(FileIconCache& cache, float size, ThumbnailService* thumbnails)
     : m_cache(cache), m_thumbnails(thumbnails), m_size(size) {
